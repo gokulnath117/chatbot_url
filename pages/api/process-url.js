@@ -8,12 +8,25 @@ const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
 async function scrapeWebsite(url) {
   let browser;
   try {
-    browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+    browser = await chromium.launch({
+      headless: true,
+      args: [
+        '--disable-dev-shm-usage',
+        '--no-sandbox',
+        '--disable-setuid-sandbox'
+      ]
+    });
+
+    const context = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    });
     
-    // Set timeout to 30 seconds
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    const page = await context.newPage();
+    
+    await page.goto(url, {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000
+    });
 
     // Add additional waiting for content stability
     await page.waitForLoadState('networkidle');
